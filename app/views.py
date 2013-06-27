@@ -17,8 +17,8 @@ import random
 #  access_token_key
 #  access_token_secret
 #  consumer_key
-#  consumer_secrets
-import credentials
+#  consumer_secret
+from credentials import access_token_secret, access_token_key, consumer_key, consumer_secret
 
 #from cacher import cacher
 
