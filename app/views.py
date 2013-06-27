@@ -435,5 +435,5 @@ def get_tweet():
 
 if __name__ == '__main__':
 #  pass
-  response=fetch({'lat':12.2,'lon':-17.3})
+  response=fetch({'lat':41.03,'lon':28.92})
   print response
