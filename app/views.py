@@ -12,6 +12,14 @@ import tweet_downloader
 import numpy as np
 import re
 import random
+
+# The credentials file defines the Twitter authentication variables:
+#  access_token_key
+#  access_token_secret
+#  consumer_key
+#  consumer_secrets
+import credentials
+
 #from cacher import cacher
 
 #Import the Naive Bayes model...
@@ -27,13 +35,6 @@ pkl_file.close()
 #Load a list of offensive words to filter out...
 bad_words = [line.strip() for line in open("./app/bad-words.txt").readlines()]
 
-
-# Credentials
-access_token_key = '1484063558-2rxxwvMJbuN1UBt6W7gFu1AvnCcj4FVo9Bsuv89'
-access_token_secret = 'RDatqGuGNDk9fdo72GK9E87Jbtj6vJrobOx8del8'
-
-consumer_key = 'mk3pDBFvIOh6yj6vKgaUA'
-consumer_secret = 'fMjU1EYyGOd8isqnujjJp403NQJeIH8ZPzdJuJ2IQ'
 
 _debug = 0
 
