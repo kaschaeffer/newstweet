@@ -175,98 +175,37 @@ def fetch(location):
   all_response=[]
   max_ids=[0,0]
 
-  while not next_url_flag:
-    call_count+=1
-    try:
-      if call_count>1:
-        lat+=random.uniform(-PERT,PERT)
-        lon+=random.uniform(-PERT,PERT)
-    except:
-      print 'error perturbing!!'
-    print 'lat = '+str(lat)
-    print 'lon = '+str(lon)
-    url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1'
-    #url='https://api.twitter.com/1.1/search/tweets.json?geocode=37.781157,-122.398720,10mi&count=100'
-    try:
-      response = twitterreq(url)
-    except:
-      print 'Error talking to Twitter API...'
-    try:
-      if 'search_metadata' in response:
-        #print response['search_metadata']
-        if 'next_results' in response['search_metadata']:
-          all_response.extend(response['statuses'])
-          next_url_flag=True
-          next_url = response['search_metadata']['next_results']
-          next_url = (r'&').join(next_url.split(r'&q=&'))
-    except:
-      print 'Error processing Twitter response'
-    if call_count>=max_call:
-      # the line below could be the source of bugs!!!!!!!!!!!!
-      #all_response.extend(response['statuses'])
-      next_url_flag=True
-
-  if call_count>=max_call:
-    print 'No next_url on first call!!!!!'
-    if 'errors' in response:
-      print response['errors']
-    else:
-      print response.keys()
-    return all_response
-
-  res=re.search('max_id=([0-9]*)&',next_url)
-  max_ids[0]=int(res.group(1))
-  url='https://api.twitter.com/1.1/search/tweets.json'+next_url
-
-
-  # Get the next tweet
+  url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1'
+  try:
+    response = twitterreq(url)
+  except:
+    print 'Error talking to Twitter API...'
   
-  # next_url_flag=False
-  # call_count=0
-  # max_call=2
+  if 'statuses' not in response:
+    return response
 
-  # while not next_url_flag:
-  #   call_count+=1
-  #   try:
-  #     response = twitterreq(url)
-  #   except:
-  #     print 'Error talking to Twitter API...'
-  #   if 'search_metadata' in response:
-  #     #print response['search_metadata']
-  #     if 'next_results' in response['search_metadata']:
-  #       all_response.extend(response['statuses'])
-  #       next_url_flag=True
-  #       next_url = response['search_metadata']['next_results']
-  #       next_url = (r'&').join(next_url.split(r'&q=&'))
-  #   if call_count>=max_call:
-  #     try:
-  #       all_response.extend(response['statuses'])
-  #     except:
-  #       print 'error response from twitter API with error '
-  #       print response
-  #     next_url_flag=True
+  print response.keys()
+  print len(response['statuses'])
+  id=''
+  i=0
+  while not id:
+    if 'id_str' in response['statuses'][i]:
+      print i
+      print response['statuses'][i]['id_str']
+      id=response['statuses'][i]['id_str']
+      break
+    i=i+1
+  max_ids[0]=int(id)
 
-  # if call_count>=max_call:
-  #   print 'No next_url on second call!!!!!'
-  #   if 'errors' in response:
-  #     print response['errors']
-  #   diff= -1001694583194
-  # else:
-  #   res=re.search('max_id=([0-9]*)&',next_url)
-  #   max_ids[1]=int(res.group(1))
-  #   diff=max_ids[1]-max_ids[0]
-  # print 'difference = '+str(diff)
-
-  diff= -1401694583194
-  ncalls=7
-  #ncalls=3
-  max_id_list=[(max_ids[0]+(diff*i)) for i in range(ncalls)]
+  diff= -1701694583194
+  ncalls=9
+  max_id_list=[(max_ids[0]+(diff*(i+1))) for i in range(ncalls)]
   url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1&max_id='
   urls=[(url+str(max_id)) for max_id in max_id_list]
   print 'preparing to make asynchronous calls...'
   jobs = [gevent.spawn(twitterreq,q) for q in urls]
   print 'ready to join asynchronous calls...'
-  gevent.joinall(jobs,timeout=10N)
+  gevent.joinall(jobs,timeout=10)
   print 'asynchronous calls joined...'
   # try:
   #   for job in jobs:
