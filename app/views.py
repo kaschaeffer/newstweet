@@ -20,7 +20,7 @@ import random
 #  consumer_secret
 from credentials import access_token_secret, access_token_key, consumer_key, consumer_secret
 
-#from cacher import cacher
+from cacher import cacher
 
 #Import the Naive Bayes model...
 import pickle
@@ -411,6 +411,15 @@ def get_tweet():
     except:
       print 'error printing out news'
 
+    try:
+      cache_tweets=[]
+      for tweet in live_news:
+        cache_tweets.append([tweet[0],1])
+      for tweet in live_other:
+        cache_tweets.append([tweet[0],0])
+      cacher(cache_tweets,lat,lon)
+    except:
+      print 'error caching tweets'
     try:
       return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]), 'errors': 0})
     except:

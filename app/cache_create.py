@@ -10,7 +10,7 @@ TABLES['tweets']= (
    "CREATE TABLE `tweets` ("
    " `tweet_id` int(11) NOT NULL AUTO_INCREMENT,"
    " `time` int(11) NOT NULL,"
-   " `text` varchar(140),"
+   " `text` text,"
    " `news` int(11),"
    " PRIMARY KEY (`tweet_id`)"
    ") ENGINE=InnoDB")
@@ -18,7 +18,7 @@ TABLES['events']= (
    "CREATE TABLE `events` ("
    " `time` int(11) NOT NULL,"
    " `lat` float(11),"
-   " `lon` int(11),"
+   " `lon` float(11),"
    " PRIMARY KEY (`time`)"
    ") ENGINE=InnoDB")
 
