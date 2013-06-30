@@ -1,0 +1,30 @@
+<html>
+  <head>
+    {% if title %}
+    <title>{{title}}</title>
+    {% else %}
+    <title>NewsTweet</title>
+    {% endif %}
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <link href="/static/css/bootstrap.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div class="navbar navbar-inverse">
+      <div class="navbar-inner">
+        <a class="brand" href="/">NewsTweet</a>
+        <ul class="nav">
+          {% for cat in categories %}
+          <li {% if cat.name == category %}class="active"{% endif %}>
+            <a href="{{cat.url}}">{{cat.name}}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% block content %}{% endblock %}
+  </body>
+</html>
+
+
+

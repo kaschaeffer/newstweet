@@ -14,11 +14,17 @@ import re
 import random
 
 # The credentials file defines the Twitter authentication variables:
-#  access_token_key
-#  access_token_secret
-#  consumer_key
-#  consumer_secret
-from credentials import access_token_secret, access_token_key, consumer_key, consumer_secret
+#  ACCESS_TOKEN_KEY
+#  ACCESS_TOKEN_SECRET
+#  CONSUMER_KEY
+#  CONSUMER_SECRET
+from config import ACCESS_TOKEN_SECRET, ACCESS_TOKEN_KEY, CONSUMER_KEY, CONSUMER_SECRET
+from config import GOOGLE_API_KEY
+
+print "ACCESS_TOKEN_KEY = "+ACCESS_TOKEN_KEY
+print "ACCESS_TOKEN_SECRET = "+ACCESS_TOKEN_SECRET
+print "CONSUMER_KEY = "+CONSUMER_KEY
+print "CONSUMER_SECRET = "+CONSUMER_SECRET
 
 from cacher import cacher
 
@@ -38,8 +44,8 @@ bad_words = [line.strip() for line in open("./app/bad-words.txt").readlines()]
 
 _debug = 0
 
-oauth_token    = oauth.Token(key=access_token_key, secret=access_token_secret)
-oauth_consumer = oauth.Consumer(key=consumer_key, secret=consumer_secret)
+oauth_token    = oauth.Token(key=ACCESS_TOKEN_KEY, secret=ACCESS_TOKEN_SECRET)
+oauth_consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
 
 signature_method_hmac_sha1 = oauth.SignatureMethod_HMAC_SHA1()
 
@@ -225,15 +231,25 @@ def fetch(location):
   print len(all_response)
   return all_response
 
+categories=[{'name': 'Home','url': 'index'},
+            {'name': 'About','url': 'about'},
+            {'name': 'Contact','url': 'contact'}]
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template("index.html")
+    return render_template("index.html",
+                          category='Home',
+                          categories=categories,
+                          APIkey=GOOGLE_API_KEY)
 
 @app.route('/about')
 def about():
-    return render_template("about.html")
+    return render_template("about.html",category='About',categories=categories)
+
+@app.route('/contact')
+def contact():
+    return render_template("contact.html",category='Contact',categories=categories)
 
 @app.route('/get_tweet',methods=['POST'])
 def get_tweet():
