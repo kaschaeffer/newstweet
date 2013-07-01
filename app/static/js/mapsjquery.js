@@ -26,8 +26,10 @@ function placeMarker(api,location) {
   //content="<div font='serif' style='color:#4099FF>Loading tweets...</div> "
 
   var infowindow = new google.maps.InfoWindow({
-    content: "<div font='calibri' style='color:#4099FF'>Loading tweets...This may take 10-15 sec.</div>"
+    content: "<div font='calibri' style='color:#4099FF'>Loading tweets...This may take a few seconds.</div>",
+    maxWidth: 500
   });
+  infowindow.open(map,marker);
 
   google.maps.event.addListener(marker, 'click', function() {
     last_infowindow.close();
@@ -56,33 +58,63 @@ function placeMarker(api,location) {
     function replacer(url) {
       return "<a font='calibri' style='color:#4099FF' href="+url+' >'+url+'</a>';
     };
-
-    if (data.result.errors===1) {
+    if (data.result.errors===2) {
+      var caption="<div font='calibri' style='color:#4099FF'>No tweets are currently available from this location.  Please click somewhere else! \n Please try again later.</div> ";
+    }
+    if (data.result.errors===2) {
       var caption="<div font='calibri' style='color:#4099FF'>The Twitter API is under heavy load. \n Please try again later.</div> ";
     }
+    // else {
+    //   var caption="<div font='calibri' style='color:#4099FF'>Most Popular News Tweets:</div> ";
+    //   var tweet="<p font='calibri'>"
+    //   for (var i=0;i<data.result.news_tweets.length;i++) {
+    //     tweet=data.result.news_tweets[i];
+    //     prob=data.result.news_tweets_prob[i];
+    //     if (!chopped.test(tweet)) {
+    //       tweet=tweet.replace(http_regex,replacer);
+    //     }
+    //     caption=caption+"</p> <p font='calibri'> "+tweet;
+    //   };
+    //   caption=caption+"</p>"
+
+    //   caption=caption+"<div style='color:#4099FF'>Other Popular Tweets:</div> <p font='calibri'>";
+    //   for (var i=0;i<data.result.other_tweets.length;i++) {
+    //     tweet=data.result.other_tweets[i];
+    //     prob=data.result.other_tweets_prob[i];
+    //     if (!chopped.test(tweet)) {
+    //       tweet=tweet.replace(http_regex,replacer);
+    //     }
+    //     caption=caption+"</p> <p font='calibri'> "+tweet;
+    //   };
+    //   caption=caption+"</p>"
+    // }
     else {
-      var caption="<div font='calibri' style='color:#4099FF'>Most Popular News Tweets:</div> ";
-      var tweet=""
+      var caption="<div style='max-height:200px; overflow-y:auto'> <p font='calibri' style='color:#4099FF'>Most Popular News Tweets:</p> ";
+      var tweet="<p font='calibri'>"
       for (var i=0;i<data.result.news_tweets.length;i++) {
         tweet=data.result.news_tweets[i];
         prob=data.result.news_tweets_prob[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);
         }
-        caption=caption+" <p font='calibri'> "+tweet;
+        caption=caption+"</br> "+tweet;
       };
+      caption=caption+"</p>"
 
-      caption=caption+"<div style='color:#4099FF'>Other Popular Tweets:</div> ";
+      caption=caption+"<p style='color:#4099FF'>Other Popular Tweets:</p> <p font='calibri'>";
       for (var i=0;i<data.result.other_tweets.length;i++) {
         tweet=data.result.other_tweets[i];
         prob=data.result.other_tweets_prob[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);
         }
-        caption=caption+" <p font='calibri'> "+tweet;
+        caption=caption+"</br> "+tweet;
       };
+      caption=caption+"</p> </div>"
     }
+    console.log(caption)
     infowindow.setContent(caption);
+    infowindow.open(map,marker);
   }
 
   /*$.ajax({

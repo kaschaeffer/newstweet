@@ -1,10 +1,10 @@
 ''' 
-TwitterAPI.py
+twitterapi.py
 Kevin Schaeffer
 (newstweet project)
 June 2013
 
-TwitterAPI is a module that defines a wrapper for the Twitter API v1.1.
+twitterapi is a module that gives a wrapper for the Twitter API v1.1.
 
 '''
 
