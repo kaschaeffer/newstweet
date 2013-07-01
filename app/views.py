@@ -1,17 +1,11 @@
 from flask import render_template, jsonify, request
 from app import app
-import json
 
-import gevent
-import gevent.monkey
-gevent.monkey.patch_all()
-
-import oauth2 as oauth
-import urllib2 as urllib
-import tweet_downloader
 import numpy as np
 import re
 import random
+
+from TwitterAPI import TwitterAPI
 
 # The credentials file defines the Twitter authentication variables:
 #  ACCESS_TOKEN_KEY
@@ -42,25 +36,9 @@ pkl_file.close()
 bad_words = [line.strip() for line in open("./app/bad-words.txt").readlines()]
 
 
-_debug = 0
-
-oauth_token    = oauth.Token(key=ACCESS_TOKEN_KEY, secret=ACCESS_TOKEN_SECRET)
-oauth_consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
-
-signature_method_hmac_sha1 = oauth.SignatureMethod_HMAC_SHA1()
-
-http_method = "GET"
-
-
-http_handler  = urllib.HTTPHandler(debuglevel=_debug)
-https_handler = urllib.HTTPSHandler(debuglevel=_debug)
-
 # Sets the radius for all searches
 RADIUS = 150
 
-# How to perturb the longitude and latitude if the twitter API
-# doesn't give next url
-PERT = 1.5
 
 def process(tweet):
     tweet_out=tweet
@@ -128,112 +106,15 @@ def processfilter(tweet):
     tweet_out = regex.sub(r' \\U ',tweet_out)
     return tweet_out
 
-
-'''
-Construct, sign, and open a twitter request
-using the hard-coded credentials above.
-'''
-def twitterreq(url):
-  req = oauth.Request.from_consumer_and_token(oauth_consumer,
-                                             token=oauth_token,
-                                             http_method="GET",
-                                             http_url=url, 
-                                             parameters=[])
-
-
-  req.sign_request(signature_method_hmac_sha1, oauth_consumer, oauth_token)
-
-  headers = req.to_header()
-
-  if http_method == "POST":
-    encoded_post_data = req.to_postdata()
-  else:
-    encoded_post_data = None
-    url = req.to_url()
-
-  opener = urllib.OpenerDirector()
-  opener.add_handler(http_handler)
-  opener.add_handler(https_handler)
-  #response=''
-  response = opener.open(url, encoded_post_data)
-
-  return json.load(response)
-
-def get_html(id_str):
-  url='https://api.twitter.com/1.1/statuses/oembed.json?id='+id_str
-  try:
-    response = twitterreq(url)
-    print response.keys()
-    print response
-    return response['html']
-  except:
-    print 'Error getting fancy tweet styling'
-    return ''
-
-def fetch(location):
-  lat=float(location['lat'])
-  lon=float(location['lon'])
-  
-  #Get first tweet
-  
-  next_url_flag=False
-  call_count=0
-  max_call=3
-
-  all_response=[]
-  max_ids=[0,0]
-
-  url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1'
-  try:
-    response = twitterreq(url)
-  except:
-    print 'Error talking to Twitter API...'
-  
-  if 'statuses' not in response:
-    return response
-
-  print response.keys()
-  print len(response['statuses'])
-  id=''
-  i=0
-  while not id:
-    if 'id_str' in response['statuses'][i]:
-      print i
-      print response['statuses'][i]['id_str']
-      id=response['statuses'][i]['id_str']
-      break
-    i=i+1
-  max_ids[0]=int(id)
-
-  diff= -1701694583194
-  ncalls=9
-  max_id_list=[(max_ids[0]+(diff*(i+1))) for i in range(ncalls)]
-  url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1&max_id='
-  urls=[(url+str(max_id)) for max_id in max_id_list]
-  print 'preparing to make asynchronous calls...'
-  jobs = [gevent.spawn(twitterreq,q) for q in urls]
-  print 'ready to join asynchronous calls...'
-  gevent.joinall(jobs,timeout=10)
-  print 'asynchronous calls joined...'
-  # try:
-  #   for job in jobs:
-  #     for tw in job.value['statuses']:
-  #       print tw['text']
-  # except:
-  #   print 'error processing incoming tweets'
-  for job in jobs:
-    try:
-      #print 'threaded number of tweets is '+str(len(job.value['statuses']))
-      all_response.extend(job.value['statuses'])
-    except:
-      print 'could not access statuses...'
-      #all_response.extend(tweets)
-  print len(all_response)
-  return all_response
-
 categories=[{'name': 'Home','url': 'index'},
             {'name': 'About','url': 'about'},
             {'name': 'Contact','url': 'contact'}]
+
+# Create a twitter API object
+twitter = TwitterAPI(ACCESS_TOKEN_SECRET,
+          ACCESS_TOKEN_KEY, 
+          CONSUMER_KEY, 
+          CONSUMER_SECRET)
 
 @app.route('/')
 @app.route('/index')
@@ -253,13 +134,13 @@ def contact():
 
 @app.route('/get_tweet',methods=['POST'])
 def get_tweet():
-    #foo = request.args.get('location',0,type=int)
-    try:
-      lat = request.form['lat']
-      lon = request.form['lon']
-      tweets = fetch({'lat':lat,'lon':lon})
-    except:
-      print 'error getting'
+    # Get the latitute and longitude for the request
+    lat = request.form['lat']
+    lon = request.form['lon']
+
+    
+    tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
+
 
     # This is just here for diagnostics....should comment out later...
     try:
