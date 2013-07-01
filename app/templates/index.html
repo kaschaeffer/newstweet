@@ -11,8 +11,21 @@
         height: 200;
       }*/
 </style>
+<div id="myModal" class="modal hide fade">
+<!-- dialog contents -->
+<div class="modal-body">Hello world!</div>
+<!-- dialog buttons -->
+<div class="modal-footer"><a href="#" class="btn primary">OK</a></div>
+</div>
 <script src="https://maps.googleapis.com/maps/api/js?key={{APIkey}}&sensor=false"></script>
 <script type="text/javascript" src="/static/js/jquery-1.10.1.min.js"></script>
+<script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="/static/js/mapsjquery.js" ></script>
-<div id="map-canvas"></div>
+
+<div id="map-canvas">
+</div>
+
+<!-- <a href="#" class="close" data-dismiss="alert">&times;</a> -->
+<!-- <a href="#" onclick="$('alert').show()">show</a> -->
+
 {% endblock %}

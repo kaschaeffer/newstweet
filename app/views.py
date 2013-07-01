@@ -138,9 +138,10 @@ def get_tweet():
     lat = request.form['lat']
     lon = request.form['lon']
 
-    
-    tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
-
+    try:
+      tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
+    except IOError:
+      return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
 
     # This is just here for diagnostics....should comment out later...
     try:
