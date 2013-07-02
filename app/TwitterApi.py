@@ -106,6 +106,8 @@ class TwitterAPI(object):
         # Get first 100 tweets from the Twitter API
         response = self._request(url)
 
+        all_response.extend(response)
+
         # Check to see if there are any statuses in response.
         # If not, raise exception using Twitter error message if it exists
         # Often this occurs if the API rate limit is exceeded, resulting
@@ -117,10 +119,15 @@ class TwitterAPI(object):
             else:
                 raise IOError, 'Twitter API error with no message'
 
+        id=0
+
         for tweet in response['statuses']:
             if 'id_str' in tweet:
                 id=int(tweet['id_str'])
                 break
+
+        if not id:
+            return all_response
 
         # We need to obtain more than 100 tweets from the twitter API.  This can be done by 
         # explicitly including max_id=xxx in the query, where max_id is the maximum tweet id
@@ -158,8 +165,10 @@ class TwitterAPI(object):
 
         # Extract tweets from the greenlet jobs
         # and add them to all_response
-        for job in jobs:
-            all_response.extend(job.value['statuses'])
+        if jobs:
+            for job in jobs:
+                if job.value and 'statuses' in job.value:
+                    all_response.extend(job.value['statuses'])
 
         return all_response
 

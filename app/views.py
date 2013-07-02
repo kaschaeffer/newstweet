@@ -144,29 +144,28 @@ def get_tweet():
       return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
 
     # This is just here for diagnostics....should comment out later...
-    try:
-      text_tweets=[]
-      for tweet in tweets:
-        if 'text' in tweet:
-          text_tweets.append(tweet['text'])
-      text_tweets=list(set(text_tweets))
-      print 'number of any raw tweets pulled in: '+str(len(text_tweets))
 
-      if len(text_tweets)<300:
-        return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
-      live_tweets=[]
-      print tweets[0]['user'].keys()
-      for tweet in tweets:
-        if 'text' in tweet and 'retweet_count' in tweet:
-          if len(tweet['text'])>100:
-            screen_name=''
-            if 'user' in tweet:
-              if 'screen_name' in tweet['user']:
-                screen_name=tweet['user']['screen_name']
-            live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str'],screen_name))
-            #print tweet['id_str']
-    except:
-      print 'error getting tweets blah'
+    text_tweets=[]
+    for tweet in tweets:
+      if 'text' in tweet:
+        text_tweets.append(tweet['text'])
+    text_tweets=list(set(text_tweets))
+    print 'number of any raw tweets pulled in: '+str(len(text_tweets))
+
+    if len(text_tweets)<200:
+      return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
+    live_tweets=[]
+    # print tweets[0]['user'].keys()
+    for tweet in tweets:
+      if 'text' in tweet and 'retweet_count' in tweet:
+        if len(tweet['text'])>100:
+          screen_name=''
+          if 'user' in tweet:
+            if 'screen_name' in tweet['user']:
+              screen_name=tweet['user']['screen_name']
+          live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str'],screen_name))
+          #print tweet['id_str']
+
 
     # Remove duplicates
     tweet_text_list=[]
