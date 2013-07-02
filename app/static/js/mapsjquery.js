@@ -132,38 +132,14 @@ function placeMarker(api,location) {
     function replacer(url) {
       return '<a href="'+url+'" target="_blank" >'+url+'</a>';
     };
+    console.log(data.result.errors);
     if (data.result.errors===1) {
-      //var caption="<div font='calibri' style='color:#4099FF'>No tweets are currently available from this location.  Please click somewhere else! \n Please try again later.</div> ";
-      caption=fail_whale;
+      caption="<blockquote><p>No tweets are currently available from this location.  Please click somewhere else! </p></blockquote> ";
     }
-    if (data.result.errors===2) {
+    else if (data.result.errors===2) {
       //var caption="<div font='calibri' style='color:#4099FF'>The Twitter API is under heavy load. \n Please try again later.</div> ";
       caption=fail_whale;
     }
-    // else {
-    //   var caption="<div font='calibri' style='color:#4099FF'>Most Popular News Tweets:</div> ";
-    //   var tweet="<p font='calibri'>"
-    //   for (var i=0;i<data.result.news_tweets.length;i++) {
-    //     tweet=data.result.news_tweets[i];
-    //     prob=data.result.news_tweets_prob[i];
-    //     if (!chopped.test(tweet)) {
-    //       tweet=tweet.replace(http_regex,replacer);
-    //     }
-    //     caption=caption+"</p> <p font='calibri'> "+tweet;
-    //   };
-    //   caption=caption+"</p>"
-
-    //   caption=caption+"<div style='color:#4099FF'>Other Popular Tweets:</div> <p font='calibri'>";
-    //   for (var i=0;i<data.result.other_tweets.length;i++) {
-    //     tweet=data.result.other_tweets[i];
-    //     prob=data.result.other_tweets_prob[i];
-    //     if (!chopped.test(tweet)) {
-    //       tweet=tweet.replace(http_regex,replacer);
-    //     }
-    //     caption=caption+"</p> <p font='calibri'> "+tweet;
-    //   };
-    //   caption=caption+"</p>"
-    // }
     else {
       var caption="<div style='max-height:200px; overflow-y:auto'>";
       caption=caption+'<span class="label label-success">Top News Tweets</span>';
