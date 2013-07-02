@@ -1,5 +1,5 @@
 ''' 
-twitterapi.py
+TwitterApi.py
 Kevin Schaeffer
 (newstweet project)
 June 2013

@@ -5,7 +5,7 @@ import numpy as np
 import re
 import random
 
-from twitterapi import TwitterAPI
+from TwitterApi import TwitterAPI
 
 # The credentials file defines the Twitter authentication variables:
 #  ACCESS_TOKEN_KEY
