@@ -1,24 +1,24 @@
 from flask import render_template, jsonify, request
 from app import app
-import json
 
-import gevent
-import gevent.monkey
-gevent.monkey.patch_all()
-
-import oauth2 as oauth
-import urllib2 as urllib
-import tweet_downloader
 import numpy as np
 import re
 import random
 
+from twitterapi import TwitterAPI
+
 # The credentials file defines the Twitter authentication variables:
-#  access_token_key
-#  access_token_secret
-#  consumer_key
-#  consumer_secret
-from credentials import access_token_secret, access_token_key, consumer_key, consumer_secret
+#  ACCESS_TOKEN_KEY
+#  ACCESS_TOKEN_SECRET
+#  CONSUMER_KEY
+#  CONSUMER_SECRET
+from config import ACCESS_TOKEN_SECRET, ACCESS_TOKEN_KEY, CONSUMER_KEY, CONSUMER_SECRET
+from config import GOOGLE_API_KEY
+
+print "ACCESS_TOKEN_KEY = "+ACCESS_TOKEN_KEY
+print "ACCESS_TOKEN_SECRET = "+ACCESS_TOKEN_SECRET
+print "CONSUMER_KEY = "+CONSUMER_KEY
+print "CONSUMER_SECRET = "+CONSUMER_SECRET
 
 from cacher import cacher
 
@@ -36,25 +36,9 @@ pkl_file.close()
 bad_words = [line.strip() for line in open("./app/bad-words.txt").readlines()]
 
 
-_debug = 0
-
-oauth_token    = oauth.Token(key=access_token_key, secret=access_token_secret)
-oauth_consumer = oauth.Consumer(key=consumer_key, secret=consumer_secret)
-
-signature_method_hmac_sha1 = oauth.SignatureMethod_HMAC_SHA1()
-
-http_method = "GET"
-
-
-http_handler  = urllib.HTTPHandler(debuglevel=_debug)
-https_handler = urllib.HTTPSHandler(debuglevel=_debug)
-
 # Sets the radius for all searches
 RADIUS = 150
 
-# How to perturb the longitude and latitude if the twitter API
-# doesn't give next url
-PERT = 1.5
 
 def process(tweet):
     tweet_out=tweet
@@ -122,128 +106,42 @@ def processfilter(tweet):
     tweet_out = regex.sub(r' \\U ',tweet_out)
     return tweet_out
 
+categories=[{'name': 'Home','url': 'index'},
+            {'name': 'About','url': 'about'},
+            {'name': 'Contact','url': 'contact'}]
 
-'''
-Construct, sign, and open a twitter request
-using the hard-coded credentials above.
-'''
-def twitterreq(url):
-  req = oauth.Request.from_consumer_and_token(oauth_consumer,
-                                             token=oauth_token,
-                                             http_method="GET",
-                                             http_url=url, 
-                                             parameters=[])
-
-
-  req.sign_request(signature_method_hmac_sha1, oauth_consumer, oauth_token)
-
-  headers = req.to_header()
-
-  if http_method == "POST":
-    encoded_post_data = req.to_postdata()
-  else:
-    encoded_post_data = None
-    url = req.to_url()
-
-  opener = urllib.OpenerDirector()
-  opener.add_handler(http_handler)
-  opener.add_handler(https_handler)
-  #response=''
-  response = opener.open(url, encoded_post_data)
-
-  return json.load(response)
-
-def get_html(id_str):
-  url='https://api.twitter.com/1.1/statuses/oembed.json?id='+id_str
-  try:
-    response = twitterreq(url)
-    print response.keys()
-    print response
-    return response['html']
-  except:
-    print 'Error getting fancy tweet styling'
-    return ''
-
-def fetch(location):
-  lat=float(location['lat'])
-  lon=float(location['lon'])
-  
-  #Get first tweet
-  
-  next_url_flag=False
-  call_count=0
-  max_call=3
-
-  all_response=[]
-  max_ids=[0,0]
-
-  url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1'
-  try:
-    response = twitterreq(url)
-  except:
-    print 'Error talking to Twitter API...'
-  
-  if 'statuses' not in response:
-    return response
-
-  print response.keys()
-  print len(response['statuses'])
-  id=''
-  i=0
-  while not id:
-    if 'id_str' in response['statuses'][i]:
-      print i
-      print response['statuses'][i]['id_str']
-      id=response['statuses'][i]['id_str']
-      break
-    i=i+1
-  max_ids[0]=int(id)
-
-  diff= -1701694583194
-  ncalls=9
-  max_id_list=[(max_ids[0]+(diff*(i+1))) for i in range(ncalls)]
-  url='https://api.twitter.com/1.1/search/tweets.json?geocode='+str(lat)+','+str(lon)+','+str(RADIUS)+'mi&count=100&lang=en&include_entities=1&max_id='
-  urls=[(url+str(max_id)) for max_id in max_id_list]
-  print 'preparing to make asynchronous calls...'
-  jobs = [gevent.spawn(twitterreq,q) for q in urls]
-  print 'ready to join asynchronous calls...'
-  gevent.joinall(jobs,timeout=10)
-  print 'asynchronous calls joined...'
-  # try:
-  #   for job in jobs:
-  #     for tw in job.value['statuses']:
-  #       print tw['text']
-  # except:
-  #   print 'error processing incoming tweets'
-  for job in jobs:
-    try:
-      #print 'threaded number of tweets is '+str(len(job.value['statuses']))
-      all_response.extend(job.value['statuses'])
-    except:
-      print 'could not access statuses...'
-      #all_response.extend(tweets)
-  print len(all_response)
-  return all_response
-
+# Create a twitter API object
+twitter = TwitterAPI(ACCESS_TOKEN_SECRET,
+          ACCESS_TOKEN_KEY, 
+          CONSUMER_KEY, 
+          CONSUMER_SECRET)
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template("index.html")
+    return render_template("index.html",
+                          category='Home',
+                          categories=categories,
+                          APIkey=GOOGLE_API_KEY)
 
 @app.route('/about')
 def about():
-    return render_template("about.html")
+    return render_template("about.html",category='About',categories=categories)
+
+@app.route('/contact')
+def contact():
+    return render_template("contact.html",category='Contact',categories=categories)
 
 @app.route('/get_tweet',methods=['POST'])
 def get_tweet():
-    #foo = request.args.get('location',0,type=int)
+    # Get the latitute and longitude for the request
+    lat = request.form['lat']
+    lon = request.form['lon']
+
     try:
-      lat = request.form['lat']
-      lon = request.form['lon']
-      tweets = fetch({'lat':lat,'lon':lon})
-    except:
-      print 'error getting'
+      tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
+    except IOError:
+      return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
 
     # This is just here for diagnostics....should comment out later...
     try:
@@ -257,10 +155,15 @@ def get_tweet():
       if len(text_tweets)<300:
         return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
       live_tweets=[]
+      print tweets[0]['user'].keys()
       for tweet in tweets:
         if 'text' in tweet and 'retweet_count' in tweet:
           if len(tweet['text'])>100:
-            live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str']))
+            screen_name=''
+            if 'user' in tweet:
+              if 'screen_name' in tweet['user']:
+                screen_name=tweet['user']['screen_name']
+            live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str'],screen_name))
             #print tweet['id_str']
     except:
       print 'error getting tweets blah'
@@ -304,7 +207,7 @@ def get_tweet():
       #   print tweet[1]
 
       for tweet in live_tweets:
-        just_tweets.append((tweet[0],tweet[2]))
+        just_tweets.append((tweet[0],tweet[2],tweet[3]))
       # for i in range(20):
       #   print live_tweets[i][0]
       #   print live_tweets[i][1]
@@ -336,26 +239,22 @@ def get_tweet():
     except:
       print 'error initializing classification features'
 
-    try:
-      for n_ind in range(len(live_tweets)):
-          tsplit = process(live_tweets[n_ind][0]).split()
-          for word in tsplit:
-              if word in word_ind:
-                  lword=word.lower()
-                  live_mat[n_ind,word_ind[lword]]+=1
-      live_pred = list(clf.predict(live_mat))
-      live_pred_prob = list(clf.predict_proba(live_mat))
-      live_news=[]
-      live_other=[]
-      for i in range(len(live_pred)):
-          if live_pred[i]:
-              live_news.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0]))
-          else:
-              live_other.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0]))
-    except:
-      print 'error filtering'
-      live_news=['a']
-      live_other=['b']
+
+    for n_ind in range(len(live_tweets)):
+        tsplit = process(live_tweets[n_ind][0]).split()
+        for word in tsplit:
+            if word in word_ind:
+                lword=word.lower()
+                live_mat[n_ind,word_ind[lword]]+=1
+    live_pred = list(clf.predict(live_mat))
+    live_pred_prob = list(clf.predict_proba(live_mat))
+    live_news=[]
+    live_other=[]
+    for i in range(len(live_pred)):
+        if live_pred[i]:
+            live_news.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0],live_tweets[i][2]))
+        else:
+            live_other.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0],live_tweets[i][2]))
 
     try:
       live_news.sort(key=(lambda x:x[2]))
@@ -421,7 +320,7 @@ def get_tweet():
     except:
       print 'error caching tweets'
     try:
-      return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]), 'errors': 0})
+      return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]),'other_tweets_names': list(zip(*live_other)[3]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]),'news_tweets_names': list(zip(*live_other)[3]), 'errors': 0})
     except:
       print 'error returning'
       return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})

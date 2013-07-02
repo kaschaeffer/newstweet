@@ -8,6 +8,8 @@
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
  */
 
+
+
 .clearfix {
   *zoom: 1;
 }
@@ -4415,10 +4417,15 @@ input[type="submit"].btn.btn-mini {
 .navbar .container {
   width: auto;
 }
-
+/*
 .nav-collapse.collapse {
   height: auto;
   overflow: visible;
+}*/
+
+.nav-collapse.collapse {
+    height: auto !important;
+    overflow: visible !important;
 }
 
 .navbar .brand {
