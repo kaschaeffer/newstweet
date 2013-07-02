@@ -45,13 +45,13 @@ window.onload = function () {
                 loading = document.createElement("div");
                 //loading.innerHTML='<img src="/static/images/loading.gif" class="img-rounded" style="height: 50; width: 50" id="loading-indicator"/>';
                 loading.innerHTML='<div class="row-fluid"> \
-                  <div class="span12 pagination-centered"><img src="/static/images/loading2.gif" style="height: 70; width: 70" /></div></div>'
+                  <div class="span12 pagination-centered"><img src="/static/images/ajax-loader.gif" style="height: 60; width: 60" /></div></div>'
                 fail_whale = document.createElement("div");
                 fail_whale.innerHTML='<div class="row-fluid"> \
                       <blockquote><p> \
                       Twitter is over capacity </p><small>Please wait a few minutes and try again.</small> \
                       </blockquote> \
-                  <div class="span12 pagination-centered"><img src="/static/images/twitter_fail_whale.png" style="height: 200; width: 350" /></div></div>';
+                  <div class="span12 pagination-centered"><img src="/static/images/twitter_fail_whale.png" style="height: 170; width: 270" /></div></div>';
                 
                 //<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
             }
@@ -126,7 +126,7 @@ function placeMarker(api,location) {
     
     // Create a regular expression for
     // extracting links
-    var http_regex = /(http:\/\/[a-zA-Z0-9_\.\-\+\&\!\#\~\/\,]+)/;
+    var http_regex = /(http:\/\/[a-zA-Z0-9_\.\-\+\&\!\#\~\/\,]+)/g;
     var chopped = /(http:\/\/[a-zA-Z0-9_\.\-\+\&\!\#\~\/\,]+)\u2026$/;
 
     function replacer(url) {
@@ -169,6 +169,7 @@ function placeMarker(api,location) {
       caption=caption+'<span class="label label-success">Top News Tweets</span>';
       for (var i=0;i<data.result.news_tweets.length;i++) {
         tweet=data.result.news_tweets[i];
+        user_name=data.result.news_tweets_names[i];
         prob=data.result.news_tweets_prob[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);
@@ -176,19 +177,21 @@ function placeMarker(api,location) {
         console.log(tweet)
         caption=caption+"<blockquote> <p>";
         caption=caption+tweet;
-        caption=caption+"</p> <small>@schaefferka</small></blockquote>";
+        caption=caption+"</p> <small>@"+user_name+"</small></blockquote>";
       };
 
       caption=caption+'<span class="label label-warning">Other Popular Tweets</span>';
       for (var i=0;i<data.result.other_tweets.length;i++) {
         tweet=data.result.other_tweets[i];
         prob=data.result.other_tweets_prob[i];
+        user_name=data.result.other_tweets_names[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);
         }
+        console.log(tweet)
         caption=caption+"<blockquote> <p>";
         caption=caption+tweet;
-        caption=caption+"</p> <small>@schaefferka</small></blockquote>";
+        caption=caption+"</p> <small>@"+user_name+"</small></blockquote>";
       };
       caption=caption+"</div>"
       caption=caption+'<p class="text-center"><span class="badge">Scroll to see more tweets</span></p>'
@@ -204,7 +207,7 @@ function placeMarker(api,location) {
       //     posuere erat a <a href="http://www.google.com">google</a> foo foo foo </blockquote>'
       // caption=caption+'</div>'
     }
-    console.log(caption)
+    //console.log(caption)
     infowindow.setContent(caption);
     last_infowindow.close();
     infowindow.open(map,marker);

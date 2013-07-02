@@ -155,10 +155,15 @@ def get_tweet():
       if len(text_tweets)<300:
         return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
       live_tweets=[]
+      print tweets[0]['user'].keys()
       for tweet in tweets:
         if 'text' in tweet and 'retweet_count' in tweet:
           if len(tweet['text'])>100:
-            live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str']))
+            screen_name=''
+            if 'user' in tweet:
+              if 'screen_name' in tweet['user']:
+                screen_name=tweet['user']['screen_name']
+            live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str'],screen_name))
             #print tweet['id_str']
     except:
       print 'error getting tweets blah'
@@ -202,7 +207,7 @@ def get_tweet():
       #   print tweet[1]
 
       for tweet in live_tweets:
-        just_tweets.append((tweet[0],tweet[2]))
+        just_tweets.append((tweet[0],tweet[2],tweet[3]))
       # for i in range(20):
       #   print live_tweets[i][0]
       #   print live_tweets[i][1]
@@ -234,26 +239,22 @@ def get_tweet():
     except:
       print 'error initializing classification features'
 
-    try:
-      for n_ind in range(len(live_tweets)):
-          tsplit = process(live_tweets[n_ind][0]).split()
-          for word in tsplit:
-              if word in word_ind:
-                  lword=word.lower()
-                  live_mat[n_ind,word_ind[lword]]+=1
-      live_pred = list(clf.predict(live_mat))
-      live_pred_prob = list(clf.predict_proba(live_mat))
-      live_news=[]
-      live_other=[]
-      for i in range(len(live_pred)):
-          if live_pred[i]:
-              live_news.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0]))
-          else:
-              live_other.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0]))
-    except:
-      print 'error filtering'
-      live_news=['a']
-      live_other=['b']
+
+    for n_ind in range(len(live_tweets)):
+        tsplit = process(live_tweets[n_ind][0]).split()
+        for word in tsplit:
+            if word in word_ind:
+                lword=word.lower()
+                live_mat[n_ind,word_ind[lword]]+=1
+    live_pred = list(clf.predict(live_mat))
+    live_pred_prob = list(clf.predict_proba(live_mat))
+    live_news=[]
+    live_other=[]
+    for i in range(len(live_pred)):
+        if live_pred[i]:
+            live_news.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0],live_tweets[i][2]))
+        else:
+            live_other.append((live_tweets[i][0],live_tweets[i][1],live_pred_prob[i][0],live_tweets[i][2]))
 
     try:
       live_news.sort(key=(lambda x:x[2]))
@@ -319,7 +320,7 @@ def get_tweet():
     except:
       print 'error caching tweets'
     try:
-      return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]), 'errors': 0})
+      return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]),'other_tweets_names': list(zip(*live_other)[3]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]),'news_tweets_names': list(zip(*live_other)[3]), 'errors': 0})
     except:
       print 'error returning'
       return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
