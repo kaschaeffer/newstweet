@@ -98,15 +98,21 @@ class TwitterAPI(object):
 
         # Initialize array that will hold all the tweets.
         all_response=[]
+        response={}
 
         # Construct the URL for the Twitter API request
         url='https://api.twitter.com/1.1/search/tweets.json?geocode='
         url=url+str(lat)+','+str(lon)+','+str(radius)+'mi&count=100&lang=en&include_entities=1'
         
         # Get first 100 tweets from the Twitter API
-        response = self._request(url)
+        timeout=3
+        jobs = [gevent.spawn(self._request,url)]
+        gevent.joinall(jobs,timeout=timeout)
 
-        all_response.extend(response)
+        if jobs:
+            for job in jobs:
+                if job.value:
+                    response=job.value
 
         # Check to see if there are any statuses in response.
         # If not, raise exception using Twitter error message if it exists
@@ -140,11 +146,12 @@ class TwitterAPI(object):
         #
         # Note this is all a hack to get around paging being eliminated from the
         # Twitter API in going from v1 to v1.1.
-        diff= -1701694583194
+        #diff= -1601694583194
+        diff= -2201694583194
 
         # Number of calls to the twitter API
         # ncalls * 100 = total number of tweets collected
-        ncalls=9
+        ncalls=14
 
         # Create list of max ids
         max_ids=[id+(diff*(_+1)) for _ in range(ncalls)]
@@ -159,7 +166,7 @@ class TwitterAPI(object):
         # Making sequential calls to the Twitter API is too slow.
         # We use greenlets to make fast asynchronous calls
         # and require them to finish after timeout seconds.
-        timeout=10
+        timeout=4
         jobs = [gevent.spawn(self._request,url) for url in urls]
         gevent.joinall(jobs,timeout=timeout)
 
