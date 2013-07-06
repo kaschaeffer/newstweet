@@ -3,6 +3,7 @@ from app import app
 
 import numpy as np
 import re
+import sys
 import random
 
 from TwitterApi import TwitterAPI
@@ -24,16 +25,22 @@ print "CONSUMER_SECRET = "+CONSUMER_SECRET
 
 #Import the Naive Bayes model...
 import pickle
-pkl_file = open('./app/naiveb_model.pkl', 'rb')
+
+#Set root directory (for some reason needs to be explicitly set
+#when using uwsgi)
+# root_dir='./'
+root_dir='/home/ubuntu/newstweet/'
+
+pkl_file = open(root_dir+'app/naiveb_model.pkl', 'rb')
 clf = pickle.load(pkl_file)
 pkl_file.close()
 
-pkl_file = open('./app/word_ind.pkl', 'rb')
+pkl_file = open(root_dir+'app/word_ind.pkl', 'rb')
 word_ind = pickle.load(pkl_file)
 pkl_file.close()
 
 #Load a list of offensive words to filter out...
-bad_words = [line.strip() for line in open("./app/bad-words.txt").readlines()]
+bad_words = [line.strip() for line in open(root_dir+"app/bad-words.txt").readlines()]
 
 
 # Sets the radius for all searches
@@ -140,8 +147,10 @@ def get_tweet():
 
     try:
       tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
-    except IOError:
+    except IOError as e:
+      #print "I/O error({0}): {1}".format(e.errno, e.strerror)
       return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
+    #tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
 
     # This is just here for diagnostics....should comment out later...
 

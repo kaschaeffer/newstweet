@@ -105,7 +105,7 @@ class TwitterAPI(object):
         url=url+str(lat)+','+str(lon)+','+str(radius)+'mi&count=100&lang=en&include_entities=1'
         
         # Get first 100 tweets from the Twitter API
-        timeout=3
+        timeout=50
         jobs = [gevent.spawn(self._request,url)]
         gevent.joinall(jobs,timeout=timeout)
 
@@ -123,6 +123,7 @@ class TwitterAPI(object):
                 print response['errors']
                 raise IOError, response['errors'][0]['code']
             else:
+                print 'faulty response = '+str(response)
                 raise IOError, 'Twitter API error with no message'
 
         id=0

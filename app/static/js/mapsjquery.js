@@ -7,6 +7,10 @@ var loading, fail_whale
 
 // Following bootbox.js example
 //
+// Don't show the splash screen for mobile devices
+// http://stackoverflow.com/questions/3514784/what-is-the-best-way-to-detect-a-handheld-device-in-jquery/3540295#3540295
+//
+if (!( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) )) {
 $("#myModal").on("show", function() {    // wire up the OK button to dismiss the modal when shown
         $("#myModal a.btn").on("click", function(e) {
             console.log("button pressed");   // just as an example...
@@ -33,6 +37,8 @@ $(document).ready(function() {
 
     // put all your jQuery goodness in here.
 });
+
+}
 
 window.onload = function () {
                 //alert('big test!!!!')
