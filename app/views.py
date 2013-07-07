@@ -5,42 +5,31 @@ import numpy as np
 import re
 import sys
 import random
+import pickle
 
 from TwitterApi import TwitterAPI
+from cacher import cacher,loader
 
-# The credentials file defines the Twitter authentication variables:
-#  ACCESS_TOKEN_KEY
-#  ACCESS_TOKEN_SECRET
-#  CONSUMER_KEY
-#  CONSUMER_SECRET
+# config.py holds the Twitter API and Google Maps API authentication variables
 from config import ACCESS_TOKEN_SECRET, ACCESS_TOKEN_KEY, CONSUMER_KEY, CONSUMER_SECRET
 from config import GOOGLE_API_KEY
 
-print "ACCESS_TOKEN_KEY = "+ACCESS_TOKEN_KEY
-print "ACCESS_TOKEN_SECRET = "+ACCESS_TOKEN_SECRET
-print "CONSUMER_KEY = "+CONSUMER_KEY
-print "CONSUMER_SECRET = "+CONSUMER_SECRET
-
-from cacher import cacher,loader
-
 #Import the Naive Bayes model...
-import pickle
-
 #Set root directory (for some reason needs to be explicitly set
 #when using uwsgi)
 root_dir='./'
 #root_dir='/home/ubuntu/newstweet/'
 
-pkl_file = open(root_dir+'app/naiveb_model.pkl', 'rb')
+pkl_file = open(root_dir+'app/model/naiveb_model.pkl', 'rb')
 clf = pickle.load(pkl_file)
 pkl_file.close()
 
-pkl_file = open(root_dir+'app/word_ind.pkl', 'rb')
+pkl_file = open(root_dir+'app/model/word_ind.pkl', 'rb')
 word_ind = pickle.load(pkl_file)
 pkl_file.close()
 
-#Load a list of offensive words to filter out...
-bad_words = [line.strip() for line in open(root_dir+"app/bad-words.txt").readlines()]
+#import filter for removing any tweets containing offensive content
+filter_words = [line.strip() for line in open(root_dir+"app/model/filter-words.txt").readlines()]
 
 
 # Sets the radius for all searches
@@ -261,18 +250,16 @@ def get_tweet():
     try:
       good_tweets=[]
       for tweet in live_tweets:
-          isbad=False
+          filterout=False
           tsplit = processfilter(tweet[0]).split()
           for word in tsplit:
-            if word.lower() in bad_words:
-              isbad=True
-              #print 'BAD WORD IS: '+word
-              #print tweet
+            if word.lower() in filter_words:
+              filterout=True
               break
-          if isbad==False:
+          if filterout==False:
             good_tweets.append(tweet)
     except:
-      print 'error filtering out bad words...'
+      print 'error filtering...'
 
     try:
       live_tweets=good_tweets
@@ -303,27 +290,6 @@ def get_tweet():
       live_news.sort(key=(lambda x:x[2]))
     except:
       print 'error sorting again!'
-    #live_other.sort(key=(lambda x:x[1]),reverse=True)
-
-    # #print tweets[0]
-    # #tweets = fetch(199)
-
-    # print len(live_news)
-    # for tweet in live_news:
-    #   print tweet
-    # print len(live_other)
-    # for tweet in live_other:
-    #   print tweet
-
-    # print 'NEWS:'
-    # for tweet in live_news:
-    #   print tweet[0]
-    #   print tweet[1]
-
-    # print 'OTHER:'
-    # for tweet in live_other:
-    #   print tweet[0]
-    #   print tweet[1]
 
     ntweets_send=3
 
@@ -368,23 +334,6 @@ def get_tweet():
     except:
       print 'error returning'
       return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
-# def fetch(location):
-#   #lat=location['lat']
-#   #lon=location['lon']
-#   #url='https://api.twitter.com/1.1/search/tweets.json?geocode='+lat+','+lon+',10mi&count=100'
-#   #arameters = []
-#   #response = json.load(twitterreq(url))
-#   response = 'test'
-#   return response
-
-# @app.route('/_add_numbers',methods=['POST'])
-# def add_numbers():
-# #    """Add two numbers server side, ridiculous but well..."""
-# #    #a = request.args.get('a', 0, type=int)
-# #    #b = request.args.get('b', 0, type=int)
-#     fooa = -10
-#     foob = -1
-#     return jsonify(result=fooa+foob)
 
 if __name__ == '__main__':
 #  pass
