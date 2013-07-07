@@ -7,36 +7,34 @@ var loading, fail_whale
 
 // Following bootbox.js example
 //
-// Don't show the splash screen for mobile devices
+// Don't show the modal splash screen for mobile devices
 // http://stackoverflow.com/questions/3514784/what-is-the-best-way-to-detect-a-handheld-device-in-jquery/3540295#3540295
 //
 if (!( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) )) {
-$("#myModal").on("show", function() {    // wire up the OK button to dismiss the modal when shown
-        $("#myModal a.btn").on("click", function(e) {
-            console.log("button pressed");   // just as an example...
-            $("#myModal").modal('hide');     // dismiss the dialog
+    $("#myModal").on("show", function() {    // wire up the OK button to dismiss the modal when shown
+            $("#myModal a.btn").on("click", function(e) {
+                console.log("button pressed");   // just as an example...
+                $("#myModal").modal('hide');     // dismiss the dialog
+            });
         });
-    });
- 
-    $("#myModal").on("hide", function() {    // remove the event listeners when the dialog is dismissed
-        $("#myModal a.btn").off("click");
-    });
-    
-    $("#myModal").on("hidden", function() {  // remove the actual elements from the DOM when fully hidden
-        $("#myModal").remove();
-    });
-    
-    $("#myModal").modal({                    // wire up the actual modal functionality and show the dialog
-      "backdrop"  : "static",
-      "keyboard"  : true,
-      "show"      : true                     // ensure the modal is shown immediately
-    });
+     
+        $("#myModal").on("hide", function() {    // remove the event listeners when the dialog is dismissed
+            $("#myModal a.btn").off("click");
+        });
+        
+        $("#myModal").on("hidden", function() {  // remove the actual elements from the DOM when fully hidden
+            $("#myModal").remove();
+        });
+        
+        $("#myModal").modal({                    // wire up the actual modal functionality and show the dialog
+          "backdrop"  : "static",
+          "keyboard"  : true,
+          "show"      : true                     // ensure the modal is shown immediately
+        });
 
-$(document).ready(function() {
-    $('#myModal').modal()
-
-    // put all your jQuery goodness in here.
-});
+    $(document).ready(function() {
+        $('#myModal').modal()
+    });
 
 }
 
@@ -132,8 +130,8 @@ function placeMarker(api,location) {
     
     // Create a regular expression for
     // extracting links
-    var http_regex = /(http:\/\/[a-zA-Z0-9_\.\-\+\&\!\#\~\/\,]+)/g;
-    var chopped = /(http:\/\/[a-zA-Z0-9_\.\-\+\&\!\#\~\/\,]+)\u2026$/;
+    var http_regex = /(http[a-zA-Z0-9_\:\.\-\+\&\!\#\~\/\,]+)/g;
+    var chopped = /(http[a-zA-Z0-9_\:\.\-\+\&\!\#\~\/\,]+)\u2026$/;
 
     function replacer(url) {
       return '<a href="'+url+'" target="_blank" >'+url+'</a>';
@@ -152,7 +150,7 @@ function placeMarker(api,location) {
       for (var i=0;i<data.result.news_tweets.length;i++) {
         tweet=data.result.news_tweets[i];
         user_name=data.result.news_tweets_names[i];
-        prob=data.result.news_tweets_prob[i];
+        //prob=data.result.news_tweets_prob[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);
         }
@@ -165,7 +163,7 @@ function placeMarker(api,location) {
       caption=caption+'<span class="label label-warning">Other Popular Tweets</span>';
       for (var i=0;i<data.result.other_tweets.length;i++) {
         tweet=data.result.other_tweets[i];
-        prob=data.result.other_tweets_prob[i];
+        //prob=data.result.other_tweets_prob[i];
         user_name=data.result.other_tweets_names[i];
         if (!chopped.test(tweet)) {
           tweet=tweet.replace(http_regex,replacer);

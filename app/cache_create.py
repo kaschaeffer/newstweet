@@ -10,7 +10,8 @@ TABLES['tweets']= (
    "CREATE TABLE `tweets` ("
    " `tweet_id` int(11) NOT NULL AUTO_INCREMENT,"
    " `time` int(11) NOT NULL,"
-   " `text` text,"
+   " `text` text CHARACTER SET ucs2,"
+   " `username` text CHARACTER SET ucs2,"
    " `news` int(11),"
    " PRIMARY KEY (`tweet_id`)"
    ") ENGINE=InnoDB")

@@ -21,15 +21,15 @@ print "ACCESS_TOKEN_SECRET = "+ACCESS_TOKEN_SECRET
 print "CONSUMER_KEY = "+CONSUMER_KEY
 print "CONSUMER_SECRET = "+CONSUMER_SECRET
 
-# from cacher import cacher
+from cacher import cacher,loader
 
 #Import the Naive Bayes model...
 import pickle
 
 #Set root directory (for some reason needs to be explicitly set
 #when using uwsgi)
-# root_dir='./'
-root_dir='/home/ubuntu/newstweet/'
+root_dir='./'
+#root_dir='/home/ubuntu/newstweet/'
 
 pkl_file = open(root_dir+'app/naiveb_model.pkl', 'rb')
 clf = pickle.load(pkl_file)
@@ -148,11 +148,26 @@ def get_tweet():
     try:
       tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
     except IOError as e:
-      #print "I/O error({0}): {1}".format(e.errno, e.strerror)
-      return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
+      #try to pull tweets from cache
+      print 'going to cache...'
+      news_tweets,other_tweets = loader(lat,lon)
+      # print list(zip(*other_tweets)[0])
+      # print list(zip(*other_tweets)[1])
+      # print list(zip(*news_tweets)[0])
+      # print list(zip(*news_tweets)[1])
+      print other_tweets
+      print news_tweets
+
+      if len(news_tweets)>0:
+        return jsonify(result={'other_tweets': list(zip(*other_tweets)[0]),'other_tweets_names': list(zip(*other_tweets)[1]),
+          'news_tweets': list(zip(*news_tweets)[0]),'news_tweets_names': list(zip(*news_tweets)[1]),'errors': 0})
+      else:
+        print 'nothing in cache...'
+        return jsonify(result={'other_tweets': '','news_tweets': '','errors': 2})
     #tweets = twitter.get_geotweets({'lat':lat,'lon':lon},150)
 
-    # This is just here for diagnostics....should comment out later...
+    #test out loading older tweets from the cache...
+    loader(lat,lon)
 
     text_tweets=[]
     for tweet in tweets:
@@ -162,18 +177,38 @@ def get_tweet():
     print 'number of any raw tweets pulled in: '+str(len(text_tweets))
 
     if len(text_tweets)<200:
-      return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
+      #try to pull tweets from cache
+      print 'going to cache...'
+      news_tweets,other_tweets = loader(lat,lon)
+      print news_tweets
+      print other_tweets
+      if len(news_tweets)>0:
+        return jsonify(result={'other_tweets': zip(*other_tweets)[0],'other_tweets_names': zip(*other_tweets)[1],
+          'news_tweets': zip(*news_tweets)[0],'news_tweets_names': zip(*news_tweets)[1],'errors': 0})
+      else:
+        print 'nothing in cache...'
+        return jsonify(result={'other_tweets': '','news_tweets': '','errors': 1})
     live_tweets=[]
     # print tweets[0]['user'].keys()
     for tweet in tweets:
       if 'text' in tweet and 'retweet_count' in tweet:
         if len(tweet['text'])>100:
           screen_name=''
+          tweet_text=tweet['text']
+          tweet_rtcount=tweet['retweet_count']
           if 'user' in tweet:
             if 'screen_name' in tweet['user']:
               screen_name=tweet['user']['screen_name']
-          live_tweets.append((tweet['text'],tweet['retweet_count'],tweet['id_str'],screen_name))
-          #print tweet['id_str']
+
+          # check to see if its a retweet
+          # if so use the original message
+          if 'retweeted_status' in tweet:
+            if 'text' in tweet['retweeted_status']:
+              tweet_text=tweet['retweeted_status']['text']
+            if 'user' in tweet['retweeted_status'] and 'screen_name' in tweet['retweeted_status']['user']:
+              screen_name=tweet['retweeted_status']['user']['screen_name']
+          live_tweets.append((tweet_text,tweet_rtcount,tweet['id_str'],screen_name))
+          
 
 
     # Remove duplicates
@@ -318,15 +353,16 @@ def get_tweet():
     except:
       print 'error printing out news'
 
-    # try:
-    #   cache_tweets=[]
-    #   for tweet in live_news:
-    #     cache_tweets.append([tweet[0],1])
-    #   for tweet in live_other:
-    #     cache_tweets.append([tweet[0],0])
-    #   cacher(cache_tweets,lat,lon)
-    # except:
-    #   print 'error caching tweets'
+    cache_tweets=[]
+    for tweet in live_news:
+      cache_tweets.append([tweet[0],tweet[3],1])
+    for tweet in live_other:
+      cache_tweets.append([tweet[0],tweet[3],0])
+    cacher(cache_tweets,lat,lon)
+    try:
+      pass
+    except:
+      print 'error caching tweets'
     try:
       return jsonify(result={'other_tweets': list(zip(*live_other)[0]),'other_tweets_prob': list(zip(*live_other)[2]),'other_tweets_names': list(zip(*live_other)[3]), 'news_tweets': list(zip(*live_news)[0]),'news_tweets_prob': list(zip(*live_news)[2]),'news_tweets_names': list(zip(*live_other)[3]), 'errors': 0})
     except:
