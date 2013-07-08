@@ -124,6 +124,10 @@ def index():
 def about():
     return render_template("about.html",category='About',categories=categories)
 
+@app.route('/about')
+def about():
+    return render_template("about.html",category='About',categories=categories)
+
 @app.route('/contact')
 def contact():
     return render_template("contact.html",category='Contact',categories=categories)
